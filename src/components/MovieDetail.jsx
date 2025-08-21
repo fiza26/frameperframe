@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
+import ReviewCard from "./ReviewCard";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -17,6 +18,8 @@ export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -24,7 +27,24 @@ export default function MovieDetail() {
       const data = await response.json();
       setMovie(data);
     };
+
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/movie/${id}/reviews`,
+          API_OPTIONS
+        );
+        const data = await response.json();
+        setReviews(data.results || []);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
     fetchMovie();
+    fetchReviews();
   }, [id]);
 
   if (!movie)
@@ -69,6 +89,23 @@ export default function MovieDetail() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Reviews */}
+      {/* Reviews */}
+      <div className="max-w-5xl mx-auto mt-8">
+        <h2 className="text-2xl font-semibold mb-4">User Reviews</h2>
+        {loadingReviews ? (
+          <Spinner />
+        ) : reviews.length > 0 ? (
+          <ul className="space-y-4">
+            {reviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400">No reviews available.</p>
+        )}
       </div>
     </div>
   );
